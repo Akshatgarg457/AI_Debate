@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debate</title>
+    <link rel="stylesheet" th:href="@{/css/Debate.css}">
+</head>
+
+<body>
+
+<div class="header">
+    <h2 id="modeTitle">Debate Mode</h2>
+    <a href="/dashboard" class="back-btn">← Back</a>
+</div>
+
+<div class="container">
+
+    <h1>Start Your Debate</h1>
+
+    <h2 id="topicTitle">Topic: Loading...</h2>
+
+    <div id="chatBox" class="chat-box"></div>
+
+    <div class="input-section">
+        <textarea id="argument" placeholder="Type your argument..."></textarea>
+        <button onclick="sendArgument()">Send</button>
+        <button onclick="endDebate()" class="end-btn">End Debate</button>
+    </div>
+
+</div>
+
+<!-- 🏆 RESULT AT BOTTOM -->
+<div id="resultBox" class="result-bottom"></div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+let topic = params.get("topic");
+let mode = params.get("mode");
+
+let lastUserArg = "";
+let lastAiArg = "";
+let debateEnded = false;
+
+// SET TOPIC
+if(topic){
+    document.getElementById("topicTitle").innerText = "Topic: " + topic;
+}else{
+    topic = "General Debate";
+    document.getElementById("topicTitle").innerText = "Topic: General Debate";
+}
+
+// SET MODE
+if(mode === "human"){
+    document.getElementById("modeTitle").innerText = "Human Debate 👥";
+}else{
+    document.getElementById("modeTitle").innerText = "AI Debate 🤖";
+}
+
+// SEND
+function sendArgument() {
+
+    if(debateEnded){
+        alert("Debate already ended!");
+        return;
+    }
+
+    let userText = document.getElementById("argument").value;
+    let chatBox = document.getElementById("chatBox");
+
+    if(userText.trim() === ""){
+        alert("Enter something!");
+        return;
+    }
+
+    lastUserArg = userText;
+
+    chatBox.innerHTML += `<div class="msg user">You: ${userText}</div>`;
+
+    if(mode === "human"){
+        chatBox.innerHTML += `<div class="msg opponent">Opponent: ${userText}</div>`;
+        document.getElementById("argument").value = "";
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return;
+    }
+
+    fetch("/debate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({argument: userText, topic: topic})
+    })
+    .then(res => res.text())
+    .then(data => {
+        lastAiArg = data;
+
+        chatBox.innerHTML += `<div class="msg ai">AI: ${data}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    document.getElementById("argument").value = "";
+}
+
+// END DEBATE
+function endDebate() {
+
+    if(debateEnded){
+        alert("Debate already ended!");
+        return;
+    }
+
+    if(!lastUserArg || !lastAiArg){
+        alert("Complete at least one round!");
+        return;
+    }
+
+    debateEnded = true;
+
+    let winner = "";
+    let reason = "";
+
+    if(lastUserArg.length > lastAiArg.length){
+        winner = "You 🥇";
+        reason = "Your argument was longer and more detailed.";
+    } else {
+        winner = "AI 🤖";
+        reason = "AI argument was longer and more detailed.";
+    }
+
+    const resultBox = document.getElementById("resultBox");
+
+    resultBox.innerHTML = `
+        <div class="result-card">
+            <h2>🏆 Winner: ${winner}</h2>
+            <p><b>Reason:</b> ${reason}</p>
+        </div>
+   `;
+
+    resultBox.scrollIntoView({ behavior: "smooth" });
+
+    // 🔥 SAVE RESULT LOCALLY (FOR DASHBOARD)
+    localStorage.setItem("lastWinner", winner);
+    localStorage.setItem("lastReason", reason);
+    localStorage.setItem("lastTopic", topic);
+
+    saveDebate();
+}
+
+// SAVE
+function saveDebate() {
+    const username = localStorage.getItem("username") || "Guest";
+
+    fetch("/saveDebate", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: `username=${username}&topic=${topic}&userArgument=${lastUserArg}&aiArgument=${lastAiArg}`
+    });
+}
+
+</script>
+
+</body>
+</html>

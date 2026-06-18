@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debate Result</title>
+    <link rel="stylesheet" th:href="@{/css/result.css}">
+</head>
+
+<body>
+
+<div class="header">
+    <h2>🏆 Debate Result</h2>
+    <a href="/dashboard" class="back-btn">← Dashboard</a>
+</div>
+
+<div class="container">
+
+    <h2 id="topic"></h2>
+
+    <div class="result-card">
+        <h1 id="winner"></h1>
+        <p id="reason"></p>
+    </div>
+
+    <div class="argument-box">
+        <h3>🧑 Your Argument</h3>
+        <p id="userArg"></p>
+    </div>
+
+    <div class="argument-box">
+        <h3>🤖 AI Argument</h3>
+        <p id="aiArg"></p>
+    </div>
+
+</div>
+
+<script>
+
+// GET DATA
+const topic = localStorage.getItem("lastTopic");
+const winner = localStorage.getItem("lastWinner");
+const reason = localStorage.getItem("lastReason");
+const userArg = localStorage.getItem("lastUserArg");
+const aiArg = localStorage.getItem("lastAiArg");
+
+// SET DATA
+document.getElementById("topic").innerText = "📌 Topic: " + (topic || "N/A");
+document.getElementById("winner").innerText = "🏆 Winner: " + (winner || "N/A");
+document.getElementById("reason").innerText = reason || "No reason available";
+document.getElementById("userArg").innerText = userArg || "-";
+document.getElementById("aiArg").innerText = aiArg || "-";
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: radial-gradient(circle at top, #1e293b, #020617);
+    color: white;
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 40px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+}
+
+/* BACK BUTTON */
+.back-btn {
+    color: #f87171;
+    text-decoration: none;
+}
+
+/* CONTAINER */
+.container {
+    padding: 30px;
+    text-align: center;
+}
+
+/* RESULT CARD */
+.result-card {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    padding: 25px;
+    border-radius: 15px;
+    margin: 25px auto;
+    width: 60%;
+    box-shadow: 0 0 25px rgba(139,92,246,0.5);
+}
+
+/* ARGUMENT BOX */
+.argument-box {
+    background: rgba(255,255,255,0.05);
+    padding: 15px;
+    margin: 15px auto;
+    border-radius: 10px;
+    width: 60%;
+}

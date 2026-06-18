@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Debate</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #eee;
+            text-align: center;
+        }
+
+        .chat-box {
+            width: 60%;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            height: 400px;
+            overflow-y: auto;
+        }
+
+        .user {
+            text-align: right;
+            margin: 10px;
+        }
+
+        .ai {
+            text-align: left;
+            margin: 10px;
+        }
+
+        .bubble-user {
+            display: inline-block;
+            background: green;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .bubble-ai {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Topic: Debate AI</h2>
+
+<div class="chat-box" id="chat"></div>
+
+<br>
+
+<input type="text" id="input" placeholder="Enter your argument..." size="50">
+<button onclick="send()">Send</button>
+
+<script>
+    function send() {
+        let input = document.getElementById("input").value;
+        let chat = document.getElementById("chat");
+
+        // User message
+        chat.innerHTML += `
+            <div class="user">
+                <div class="bubble-user">${input}</div>
+            </div>
+        `;
+
+        fetch(`/api/ai/debate?message=` + encodeURIComponent(input), {
+            method: "POST"
+        })
+        .then(res => res.text())
+        .then(data => {
+            chat.innerHTML += `
+                <div class="ai">
+                    <div class="bubble-ai">${data}</div>
+                </div>
+            `;
+            chat.scrollTop = chat.scrollHeight;
+        });
+
+        document.getElementById("input").value = "";
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+/* BACKGROUND */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top, #1e293b, #020617);
+    color: white;
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 40px;
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* TITLE */
+.title {
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+}
+
+/* CONTAINER */
+.container {
+    text-align: center;
+    padding: 40px;
+}
+
+/* CARD LAYOUT */
+.card-container {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin: 25px 0;
+}
+
+/* BASE CARD */
+.card {
+    width: 260px;
+    padding: 25px;
+    border-radius: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* GLOW CARD */
+.glow {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    box-shadow: 0 0 20px rgba(139,92,246,0.5);
+}
+
+.glow:hover {
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 0 40px rgba(139,92,246,0.8);
+}
+
+/* GLASS CARD */
+.glass {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.glass:hover {
+    transform: translateY(-6px);
+}
+
+/* PANEL */
+.panel {
+    margin: 30px auto;
+    width: 60%;
+    padding: 20px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+}
+
+/* HISTORY */
+.history-box {
+    width: 60%;
+    margin: 10px auto;
+    padding: 12px;
+    border-radius: 10px;
+    background: #334155;
+}
+
+/* SECTION TITLE */
+.section-title {
+    margin-top: 20px;
+}
+
+/* LOGOUT */
+.logout-btn {
+    color: #f87171;
+    text-decoration: none;
+}

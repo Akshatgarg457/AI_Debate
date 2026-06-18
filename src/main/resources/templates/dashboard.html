@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <h2>🚀 AI Voice Debate Partner</h2>
+
+    <div class="user-section">
+        <a href="/" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+    <h1 class="title">Choose Your Mode</h1>
+
+    <!-- MAIN CARDS -->
+    <div class="card-container">
+
+        <div class="card glow" onclick="location.href='/topic?mode=ai'">
+            <h2>🤖 AI Debate</h2>
+            <p>Challenge AI with logic</p>
+        </div>
+
+        <div class="card glow" onclick="location.href='/topic?mode=human'">
+            <h2>👥 Human Debate</h2>
+            <p>Debate with real users</p>
+        </div>
+
+    </div>
+
+    <!-- SECOND ROW -->
+    <div class="card-container">
+
+        <div class="card glass" onclick="loadHistory()">
+            <h3>📜 History</h3>
+            <p>View debates & stats</p>
+        </div>
+
+        <div class="card glass" onclick="showResult()">
+            <h3>🏆 Result</h3>
+            <p>Last debate outcome</p>
+        </div>
+
+    </div>
+
+    <!-- DISPLAY -->
+    <div id="display-section"></div>
+
+</div>
+
+<script>
+
+// =========================
+// 🔥 FIXED USERNAME LOGIC
+// =========================
+let username = localStorage.getItem("username");
+
+// CLEAN + FORMAT NAME
+if(username){
+    // remove email if stored
+    if(username.includes("@")){
+        username = username.split("@")[0];
+    }
+
+    // capitalize first letter
+    username = username.charAt(0).toUpperCase() + username.slice(1);
+} else {
+    username = "User";
+}
+
+// SHOW NAME
+document.getElementById("usernameDisplay").innerText = "👋 " + username;
+
+// =========================
+// 📜 HISTORY + STATS
+// =========================
+function loadHistory(){
+
+    Promise.all([
+        fetch(`/history?username=${username}`).then(res => res.json()),
+        fetch(`/stats?username=${username}`).then(res => res.json())
+    ])
+    .then(([historyData, statsData]) => {
+
+        let html = `
+            <div class="panel">
+                <h2>📊 Your Stats</h2>
+                <p>Wins: ${statsData.wins}</p>
+                <p>Losses: ${statsData.losses}</p>
+                <p>Total: ${statsData.total}</p>
+            </div>
+
+            <h2 class="section-title">📜 Past Debates</h2>
+        `;
+
+        if(historyData.length === 0){
+            html += "<p>No debates found.</p>";
+        }
+
+        historyData.forEach(d => {
+            html += `
+                <div class="history-box">
+                    <p><b>${d.topic}</b></p>
+                    <p>Winner: ${d.winner}</p>
+                </div>
+            `;
+        });
+
+        document.getElementById("display-section").innerHTML = html;
+    });
+}
+
+// =========================
+// 🏆 RESULT
+// =========================
+function showResult(){
+
+    const winner = localStorage.getItem("lastWinner");
+    const reason = localStorage.getItem("lastReason");
+    const topic = localStorage.getItem("lastTopic");
+
+    let html = `
+        <div class="panel">
+            <h2>🏆 Last Result</h2>
+    `;
+
+    if(!winner){
+        html += "<p>No result available</p>";
+    } else {
+        html += `
+            <p><b>Topic:</b> ${topic}</p>
+            <p><b>Winner:</b> ${winner}</p>
+            <p>${reason}</p>
+        `;
+    }
+
+    html += "</div>";
+
+    document.getElementById("display-section").innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>
