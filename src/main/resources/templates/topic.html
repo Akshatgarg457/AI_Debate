@@ -34,8 +34,11 @@
         <input type="text" id="customTopic" placeholder="Or enter your own topic...">
     </div>
 
-    <!-- START BUTTON -->
-    <button class="start-btn" onclick="startDebate()">Start Debate 🚀</button>
+    <!-- START BUTTONS -->
+    <div class="action-buttons" style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+        <button class="start-btn" style="background: #27ae60;" onclick="startDebate('for')">In Motion (For) 👍</button>
+        <button class="start-btn" style="background: #e74c3c;" onclick="startDebate('against')">Against Motion 👎</button>
+    </div>
 
 </div>
 
@@ -55,7 +58,7 @@ function selectTopic(element){
 }
 
 // START DEBATE
-function startDebate(){
+function startDebate(stance){
 
     const custom = document.getElementById("customTopic").value;
 
@@ -72,7 +75,7 @@ function startDebate(){
     const params = new URLSearchParams(window.location.search);
     const mode = params.get("mode") || "ai";
 
-    window.location.href = `/debate?topic=${encodeURIComponent(selectedTopic)}&mode=${mode}`;
+    window.location.href = `/debate?topic=${encodeURIComponent(selectedTopic)}&mode=${mode}&stance=${stance}`;
 }
 
 </script>

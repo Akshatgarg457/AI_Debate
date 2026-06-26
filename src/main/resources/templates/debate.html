@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Debate</title>
+    <title>Debate AI</title>
     <link rel="stylesheet" th:href="@{/css/Debate.css}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
@@ -21,9 +22,11 @@
     <div id="chatBox" class="chat-box"></div>
 
     <div class="input-section">
-        <textarea id="argument" placeholder="Type your argument..."></textarea>
+        <button onclick="startVoiceRecognition()" id="micBtn" class="icon-btn" title="Speak Argument">🎤</button>
+        <textarea id="argument" placeholder="Type or speak your argument and press Enter..."></textarea>
         <button onclick="sendArgument()">Send</button>
         <button onclick="endDebate()" class="end-btn">End Debate</button>
+        <button onclick="toggleVoice()" id="voiceToggleBtn" class="icon-btn voice-toggle" title="AI Voice On">🔊</button>
     </div>
 
 </div>
@@ -36,6 +39,7 @@
 const params = new URLSearchParams(window.location.search);
 let topic = params.get("topic");
 let mode = params.get("mode");
+let stance = params.get("stance") || "for";
 
 let lastUserArg = "";
 let lastAiArg = "";
@@ -43,7 +47,8 @@ let debateEnded = false;
 
 // SET TOPIC
 if(topic){
-    document.getElementById("topicTitle").innerText = "Topic: " + topic;
+    let stanceText = stance === "for" ? "(In Motion)" : "(Against Motion)";
+    document.getElementById("topicTitle").innerText = `Topic: ${topic} ${stanceText}`;
 }else{
     topic = "General Debate";
     document.getElementById("topicTitle").innerText = "Topic: General Debate";
@@ -56,6 +61,14 @@ if(mode === "human"){
     document.getElementById("modeTitle").innerText = "AI Debate 🤖";
 }
 
+// Handle Enter to submit
+document.getElementById("argument").addEventListener("keypress", function(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendArgument();
+    }
+});
+
 // SEND
 function sendArgument() {
 
@@ -64,39 +77,53 @@ function sendArgument() {
         return;
     }
 
-    let userText = document.getElementById("argument").value;
+    let argumentInput = document.getElementById("argument");
+    let userText = argumentInput.value;
     let chatBox = document.getElementById("chatBox");
 
     if(userText.trim() === ""){
-        alert("Enter something!");
         return;
     }
 
     lastUserArg = userText;
-
     chatBox.innerHTML += `<div class="msg user">You: ${userText}</div>`;
+    argumentInput.value = "";
+    
+    // Auto resize
+    chatBox.scrollTop = chatBox.scrollHeight;
 
     if(mode === "human"){
         chatBox.innerHTML += `<div class="msg opponent">Opponent: ${userText}</div>`;
-        document.getElementById("argument").value = "";
         chatBox.scrollTop = chatBox.scrollHeight;
         return;
     }
 
+    // Loading indicator
+    let loadingId = "loading-" + Date.now();
+    chatBox.innerHTML += `<div id="${loadingId}" class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
     fetch("/debate", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({argument: userText, topic: topic})
+        body: JSON.stringify({argument: userText, topic: topic, stance: stance})
     })
     .then(res => res.text())
     .then(data => {
+        // Remove loading
+        document.getElementById(loadingId).remove();
+        
         lastAiArg = data;
-
         chatBox.innerHTML += `<div class="msg ai">AI: ${data}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
+        
+        // Speak response
+        speakText(data);
+    })
+    .catch(err => {
+        document.getElementById(loadingId).remove();
+        chatBox.innerHTML += `<div class="msg ai">AI: Error communicating with server.</div>`;
     });
-
-    document.getElementById("argument").value = "";
 }
 
 // END DEBATE
@@ -132,8 +159,9 @@ function endDebate() {
             <h2>🏆 Winner: ${winner}</h2>
             <p><b>Reason:</b> ${reason}</p>
         </div>
-   `;
+    `;
 
+    resultBox.classList.add("show");
     resultBox.scrollIntoView({ behavior: "smooth" });
 
     // 🔥 SAVE RESULT LOCALLY (FOR DASHBOARD)
@@ -153,6 +181,78 @@ function saveDebate() {
         headers: {"Content-Type": "application/x-www-form-urlencoded"},
         body: `username=${username}&topic=${topic}&userArgument=${lastUserArg}&aiArgument=${lastAiArg}`
     });
+}
+
+// --- VOICE INTEGRATION ---
+let voiceEnabled = true;
+
+function toggleVoice() {
+    voiceEnabled = !voiceEnabled;
+    const btn = document.getElementById("voiceToggleBtn");
+    if(voiceEnabled) {
+        btn.innerText = "🔊";
+        btn.title = "AI Voice On";
+        btn.classList.remove("off");
+    } else {
+        btn.innerText = "🔈";
+        btn.title = "AI Voice Off";
+        btn.classList.add("off");
+        window.speechSynthesis.cancel();
+    }
+}
+
+function speakText(text) {
+    if(!voiceEnabled) return;
+    
+    // Clean text: remove asterisks or markdown
+    let cleanText = text.replace(/[\*\_]/g, "");
+    
+    let utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'en-US';
+    utterance.rate = 1.0;
+    
+    window.speechSynthesis.speak(utterance);
+}
+
+// Voice Recognition (Speech-to-Text)
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition;
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = function() {
+        document.getElementById("micBtn").classList.add("recording");
+        document.getElementById("micBtn").innerText = "🔴";
+    };
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        const argInput = document.getElementById("argument");
+        argInput.value += (argInput.value ? " " : "") + transcript;
+    };
+
+    recognition.onerror = function(event) {
+        console.error("Speech recognition error", event.error);
+        document.getElementById("micBtn").classList.remove("recording");
+        document.getElementById("micBtn").innerText = "🎤";
+    };
+
+    recognition.onend = function() {
+        document.getElementById("micBtn").classList.remove("recording");
+        document.getElementById("micBtn").innerText = "🎤";
+    };
+} else {
+    console.warn("Speech Recognition API not supported in this browser.");
+}
+
+function startVoiceRecognition() {
+    if (recognition) {
+        recognition.start();
+    } else {
+        alert("Your browser does not support Speech Recognition. Please use Chrome or Edge.");
+    }
 }
 
 </script>

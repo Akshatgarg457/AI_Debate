@@ -16,6 +16,6 @@ public class AIController {
             @RequestParam String topic,
             @RequestParam String message
     ) {
-        return geminiService.getDebateResponse(topic, message);
+        return geminiService.getDebateResponse(topic, message, "for");
     }
 }

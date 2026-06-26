@@ -29,8 +29,9 @@ public class DebateController {
 
         String userArg = request.get("argument");
         String topic = request.get("topic");
+        String stance = request.getOrDefault("stance", "for");
 
-        return geminiService.getDebateResponse(topic, userArg);
+        return geminiService.getDebateResponse(topic, userArg, stance);
     }
 
     // =========================
