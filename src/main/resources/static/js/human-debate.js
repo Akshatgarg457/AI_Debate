@@ -1,0 +1,374 @@
+const params = new URLSearchParams(window.location.search);
+
+const roomId = params.get("roomId") || "";
+
+let username =
+    params.get("username") ||
+    localStorage.getItem("username") ||
+    "Debater";
+
+let currentStance = params.get("stance") || "unknown";
+
+let socket = null;
+let isDebateEnded = false;
+let myWordCount = 0;
+let opponentWordCount = 0;
+let voiceEnabled = true;
+let recognition = null;
+let isRecording = false;
+
+if (username.includes("@")) {
+    username = username.split("@")[0];
+}
+
+localStorage.setItem("username", username);
+
+document.addEventListener("DOMContentLoaded", function () {
+    const displayRoomId = document.getElementById("displayRoomId");
+    if (displayRoomId) {
+        displayRoomId.innerText = roomId || "Unknown";
+    }
+
+    const messageInput = document.getElementById("messageInput");
+    if (messageInput) {
+        messageInput.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+
+    updateStanceUI();
+    initWebSocket();
+});
+
+function updateStanceUI() {
+    const badge = document.getElementById("displayStance");
+    const waiting = document.getElementById("waitingStance");
+
+    if (!badge || !waiting) return;
+
+    if (currentStance === "against") {
+        badge.innerText = "Against the Motion";
+        badge.style.color = "#f87171";
+        waiting.innerHTML = `Your Stance: <span class="against-stance">Against the Motion 👎</span>`;
+    } else if (currentStance === "for") {
+        badge.innerText = "In Motion (For)";
+        badge.style.color = "#86efac";
+        waiting.innerHTML = `Your Stance: <span class="for-stance">In Motion (For) 👍</span>`;
+    } else {
+        badge.innerText = "Waiting...";
+        waiting.innerText = "Your Stance: Waiting...";
+    }
+}
+
+function showStancePopup() {
+    if (currentStance === "unknown") return;
+
+    const text = document.getElementById("stanceModalText");
+    if (!text) return;
+
+    if (currentStance === "against") {
+        text.innerHTML = `<span style="color:#f87171">Against the Motion 👎</span>`;
+    } else {
+        text.innerHTML = `<span style="color:#86efac">In Motion (For) 👍</span>`;
+    }
+
+    const modal = document.getElementById("stanceModal");
+    if (modal) modal.style.display = "flex";
+}
+
+function initWebSocket() {
+    if (!roomId) {
+        appendSystemMessage("Invalid room ID.");
+        return;
+    }
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws-debate`;
+
+    socket = new WebSocket(wsUrl);
+
+    socket.onopen = function () {
+        socket.send(
+            JSON.stringify({
+                type: "JOIN",
+                roomId: roomId,
+                username: username,
+                stance: currentStance
+            })
+        );
+    };
+
+    socket.onmessage = function (event) {
+        try {
+            const data = JSON.parse(event.data);
+            handleServerEvent(data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    socket.onerror = function (error) {
+        console.error("WebSocket error:", error);
+        appendSystemMessage("Connection error.");
+    };
+
+    socket.onclose = function () {
+        if (!isDebateEnded) {
+            appendSystemMessage("Disconnected from room.");
+        }
+    };
+}
+
+function handleServerEvent(data) {
+    if (data.type === "JOINED") {
+        appendSystemMessage(`${data.username} joined`);
+
+        if (
+            currentStance === "unknown" &&
+            data.username !== username &&
+            data.stance &&
+            data.stance !== "unknown"
+        ) {
+            currentStance = data.stance === "for" ? "against" : "for";
+            updateStanceUI();
+            showStancePopup();
+        }
+
+        if (data.topic) {
+            const topicTitle = document.getElementById("topicTitle");
+            const waitingTopic = document.getElementById("waitingTopic");
+            if (topicTitle) topicTitle.innerText = `Topic: ${data.topic}`;
+            if (waitingTopic) waitingTopic.innerText = `Topic: ${data.topic}`;
+        }
+
+        if (data.playerCount !== undefined) {
+            const displayPlayers = document.getElementById("displayPlayers");
+            if (displayPlayers) displayPlayers.innerText = `${data.playerCount}/2`;
+
+            const waitingOverlay = document.getElementById("waitingOverlay");
+            if (waitingOverlay) {
+                if (data.playerCount === 2) {
+                    waitingOverlay.style.display = "none";
+                } else {
+                    waitingOverlay.style.display = "flex";
+                }
+            }
+        }
+    } else if (data.type === "LEFT") {
+        appendSystemMessage(`${data.username} left the debate`);
+
+        if (data.playerCount !== undefined) {
+            const displayPlayers = document.getElementById("displayPlayers");
+            if (displayPlayers) displayPlayers.innerText = `${data.playerCount}/2`;
+        }
+    } else if (data.type === "CHAT") {
+        const isMe = data.username === username;
+        const bubble = document.createElement("div");
+
+        if (isMe) {
+            bubble.className = "chat-bubble bubble-user";
+            bubble.innerText = `You: ${data.message}`;
+            myWordCount += countWords(data.message);
+        } else {
+            bubble.className = "chat-bubble bubble-opponent";
+            bubble.innerText = `${data.username}: ${data.message}`;
+            opponentWordCount += countWords(data.message);
+            speakText(data.message);
+        }
+
+        const chatBox = document.getElementById("chatBox");
+        if (chatBox) chatBox.appendChild(bubble);
+
+        scrollChat();
+    } else if (data.type === "ENDED") {
+        isDebateEnded = true;
+        disableDebate();
+        showResultModal(data.winner, data.reason);
+    } else if (data.type === "ERROR") {
+        alert(data.message || "Something went wrong.");
+    }
+}
+
+function sendMessage() {
+    if (isDebateEnded) {
+        alert("This debate has ended.");
+        return;
+    }
+
+    const input = document.getElementById("messageInput");
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(
+            JSON.stringify({
+                type: "CHAT",
+                roomId: roomId,
+                username: username,
+                message: text
+            })
+        );
+        input.value = "";
+    } else {
+        alert("WebSocket is not connected.");
+    }
+}
+
+function handleEndDebate() {
+    if (isDebateEnded) return;
+
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        alert("WebSocket is not connected.");
+        return;
+    }
+
+    const confirmed = confirm("Are you sure you want to end this debate?");
+    if (!confirmed) return;
+
+    let winner = "DRAW";
+    let reason = "Both debaters presented strong arguments.";
+
+    if (myWordCount > opponentWordCount) {
+        winner = username;
+        reason = `${username} presented longer and more detailed arguments.`;
+    } else if (opponentWordCount > myWordCount) {
+        winner = "Opponent";
+        reason = "The opponent presented longer and more detailed arguments.";
+    }
+
+    socket.send(
+        JSON.stringify({
+            type: "END_DEBATE",
+            roomId: roomId,
+            username: username,
+            winner: winner,
+            reason: reason
+        })
+    );
+}
+
+function showResultModal(winner, reason) {
+    const winnerEl = document.getElementById("resultWinner");
+    const reasonEl = document.getElementById("resultReason");
+    const modalEl = document.getElementById("resultModal");
+
+    if (winnerEl) winnerEl.innerText = `🏆 Winner: ${winner}`;
+    if (reasonEl) reasonEl.innerText = reason || "Debate completed.";
+    if (modalEl) modalEl.style.display = "flex";
+}
+
+function disableDebate() {
+    const msgInput = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const micBtn = document.getElementById("micBtn");
+    const endBtn = document.getElementById("endDebateBtn");
+    const displayPlayers = document.getElementById("displayPlayers");
+
+    if (msgInput) msgInput.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
+    if (micBtn) micBtn.disabled = true;
+    if (endBtn) endBtn.disabled = true;
+    if (displayPlayers) displayPlayers.innerText += " • Completed";
+}
+
+function appendSystemMessage(text) {
+    const chatBox = document.getElementById("chatBox");
+    if (!chatBox) return;
+
+    const message = document.createElement("div");
+    message.className = "system-msg";
+    message.innerText = text;
+
+    chatBox.appendChild(message);
+    scrollChat();
+}
+
+function scrollChat() {
+    const chatBox = document.getElementById("chatBox");
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function countWords(text) {
+    if (!text) return 0;
+    return text.trim().split(/\s+/).length;
+}
+
+// ── Speech Recognition ──
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onstart = function () {
+        isRecording = true;
+        const micBtn = document.getElementById("micBtn");
+        if (micBtn) micBtn.innerText = "🔴 Listening...";
+    };
+
+    recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript;
+        const input = document.getElementById("messageInput");
+        if (input) {
+            input.value += (input.value ? " " : "") + transcript;
+        }
+    };
+
+    recognition.onerror = function () {
+        stopRecordingUI();
+    };
+
+    recognition.onend = function () {
+        stopRecordingUI();
+    };
+}
+
+function toggleSpeechRecognition() {
+    if (!recognition) {
+        alert("Speech recognition is not supported. Use Chrome or Edge.");
+        return;
+    }
+
+    if (isDebateEnded) return;
+
+    if (isRecording) {
+        recognition.stop();
+    } else {
+        recognition.start();
+    }
+}
+
+function stopRecordingUI() {
+    isRecording = false;
+    const micBtn = document.getElementById("micBtn");
+    if (micBtn) micBtn.innerText = "🎤 Speak";
+}
+
+// ── Voice TTS ──
+function toggleVoice() {
+    voiceEnabled = !voiceEnabled;
+    const button = document.getElementById("ttsToggleBtn");
+    if (button) {
+        if (voiceEnabled) {
+            button.innerText = "🔊";
+        } else {
+            button.innerText = "🔈";
+            window.speechSynthesis.cancel();
+        }
+    }
+}
+
+function speakText(text) {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    window.speechSynthesis.speak(utterance);
+}

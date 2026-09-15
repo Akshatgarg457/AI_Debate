@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Debate Result</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/result.css}">
+    <link rel="stylesheet" href="/css/result.css">
 </head>
 
 <body>
@@ -43,23 +45,7 @@
     </div>
 </div>
 
-<script>
-
-// GET DATA
-const topic = localStorage.getItem("lastTopic");
-const winner = localStorage.getItem("lastWinner");
-const reason = localStorage.getItem("lastReason");
-const userArg = localStorage.getItem("lastUserArg");
-const aiArg = localStorage.getItem("lastAiArg");
-
-// SET DATA
-document.getElementById("topic").innerText = "📌 Topic: " + (topic || "N/A");
-document.getElementById("winner").innerText = "🏆 Winner: " + (winner || "N/A");
-document.getElementById("reason").innerText = reason || "No reason available";
-document.getElementById("userArg").innerText = userArg || "-";
-document.getElementById("aiArg").innerText = aiArg || "-";
-
-</script>
+<script src="/js/result.js"></script>
 
 </body>
 </html>

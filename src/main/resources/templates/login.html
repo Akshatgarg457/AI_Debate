@@ -2,94 +2,25 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
     <title>Login</title>
-
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
-
 
 <body>
 
 <div class="box">
-
     <div class="login">
-
         <div class="loginBx">
-
-            <!-- ========================= -->
-            <!-- LOGIN TITLE               -->
-            <!-- ========================= -->
-
             <h2>
-
                 <i class="fa-solid fa-right-to-bracket"></i>
-
                 LOGIN
-
             </h2>
 
+            <p id="message" style="color:red;"></p>
 
-            <!-- ========================= -->
-            <!-- ERROR / SUCCESS MESSAGES  -->
-            <!-- ========================= -->
-
-            <p id="message" style="color:red;">
-
-                <script>
-
-                    const params =
-                        new URLSearchParams(window.location.search);
-
-
-                    // Login failed
-                    if (params.get("error") === "true") {
-
-                        document.getElementById("message").innerText =
-                            "Invalid username or password";
-
-                        // Remove old username when login fails
-                        localStorage.removeItem("username");
-                    }
-
-
-                    // Signup successful
-                    if (params.get("success") === "true") {
-
-                        document.getElementById("message").innerText =
-                            "Signup successful! Please login.";
-                    }
-
-
-                    // Password reset successful
-                    if (params.get("reset") === "true") {
-
-                        document.getElementById("message").innerText =
-                            "Password reset successful!";
-                    }
-
-                </script>
-
-            </p>
-
-
-            <!-- ========================= -->
-            <!-- LOGIN FORM                -->
-            <!-- ========================= -->
-
-            <form action="/login"
-                  method="post"
-                  onsubmit="saveUsername()">
-
-
-                <!-- Username -->
-
+            <form action="/login" method="post" onsubmit="saveUsername()">
                 <input
                     type="text"
                     id="loginUsername"
@@ -99,9 +30,6 @@
                     required
                 >
 
-
-                <!-- Password -->
-
                 <input
                     type="password"
                     name="password"
@@ -110,81 +38,21 @@
                     required
                 >
 
-
-                <!-- Login button -->
-
                 <input
                     type="submit"
                     value="Sign In"
                 >
-
             </form>
 
-
-            <!-- ========================= -->
-            <!-- LINKS                     -->
-            <!-- ========================= -->
-
             <div class="group">
-
-                <a href="/forget">
-                    Forgot Password
-                </a>
-
-                <a href="/signup">
-                    Sign up
-                </a>
-
+                <a href="/forget">Forgot Password</a>
+                <a href="/signup">Sign up</a>
             </div>
-
-
         </div>
-
     </div>
-
 </div>
 
-
-<!-- ================================================= -->
-<!-- SAVE CURRENT USERNAME                             -->
-<!-- ================================================= -->
-
-<script>
-
-    function saveUsername() {
-
-        const username =
-            document
-                .getElementById("loginUsername")
-                .value
-                .trim();
-
-
-        if (username) {
-
-            /*
-             * Remove the old username first.
-             * This prevents an old account such as
-             * "Kavita" from remaining in localStorage.
-             */
-
-            localStorage.removeItem("username");
-
-
-            /*
-             * Save the username currently being used
-             * to log in.
-             */
-
-            localStorage.setItem("username", username);
-
-        }
-
-    }
-
-</script>
-
+<script src="/js/login.js"></script>
 
 </body>
-
 </html>
