@@ -1,61 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
-<meta charset="UTF-8">
-<title>Login</title>
+    <meta charset="UTF-8">
 
-<link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Login</title>
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 </head>
+
 
 <body>
 
 <div class="box">
-<div class="login">
-<div class="loginBx">
 
-<h2>
-<i class="fa-solid fa-right-to-bracket"></i>
-LOGIN
-</h2>
+    <div class="login">
 
-<!-- Messages -->
-<p style="color:red;">
+        <div class="loginBx">
+
+            <!-- ========================= -->
+            <!-- LOGIN TITLE               -->
+            <!-- ========================= -->
+
+            <h2>
+
+                <i class="fa-solid fa-right-to-bracket"></i>
+
+                LOGIN
+
+            </h2>
+
+
+            <!-- ========================= -->
+            <!-- ERROR / SUCCESS MESSAGES  -->
+            <!-- ========================= -->
+
+            <p id="message" style="color:red;">
+
+                <script>
+
+                    const params =
+                        new URLSearchParams(window.location.search);
+
+
+                    // Login failed
+                    if (params.get("error") === "true") {
+
+                        document.getElementById("message").innerText =
+                            "Invalid username or password";
+
+                        // Remove old username when login fails
+                        localStorage.removeItem("username");
+                    }
+
+
+                    // Signup successful
+                    if (params.get("success") === "true") {
+
+                        document.getElementById("message").innerText =
+                            "Signup successful! Please login.";
+                    }
+
+
+                    // Password reset successful
+                    if (params.get("reset") === "true") {
+
+                        document.getElementById("message").innerText =
+                            "Password reset successful!";
+                    }
+
+                </script>
+
+            </p>
+
+
+            <!-- ========================= -->
+            <!-- LOGIN FORM                -->
+            <!-- ========================= -->
+
+            <form action="/login"
+                  method="post"
+                  onsubmit="saveUsername()">
+
+
+                <!-- Username -->
+
+                <input
+                    type="text"
+                    id="loginUsername"
+                    name="username"
+                    placeholder="Username"
+                    autocomplete="username"
+                    required
+                >
+
+
+                <!-- Password -->
+
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    autocomplete="current-password"
+                    required
+                >
+
+
+                <!-- Login button -->
+
+                <input
+                    type="submit"
+                    value="Sign In"
+                >
+
+            </form>
+
+
+            <!-- ========================= -->
+            <!-- LINKS                     -->
+            <!-- ========================= -->
+
+            <div class="group">
+
+                <a href="/forget">
+                    Forgot Password
+                </a>
+
+                <a href="/signup">
+                    Sign up
+                </a>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- SAVE CURRENT USERNAME                             -->
+<!-- ================================================= -->
+
 <script>
-if(window.location.search.includes("error=true")){
-    document.write("Invalid username or password");
-}
-if(window.location.search.includes("success=true")){
-    document.write("Signup successful! Please login.");
-}
-if(window.location.search.includes("reset=true")){
-    document.write("Password reset successful!");
-}
+
+    function saveUsername() {
+
+        const username =
+            document
+                .getElementById("loginUsername")
+                .value
+                .trim();
+
+
+        if (username) {
+
+            /*
+             * Remove the old username first.
+             * This prevents an old account such as
+             * "Kavita" from remaining in localStorage.
+             */
+
+            localStorage.removeItem("username");
+
+
+            /*
+             * Save the username currently being used
+             * to log in.
+             */
+
+            localStorage.setItem("username", username);
+
+        }
+
+    }
+
 </script>
-</p>
 
-<form action="/login" method="post">
-
-<input type="text" name="username" placeholder="Username" required>
-
-<input type="password" name="password" placeholder="Password" required>
-
-<input type="submit" value="Sign In">
-
-</form>
-
-<div class="group">
-<a href="/forget">Forgot Password</a>
-<a href="/signup">Sign up</a>
-</div>
-
-</div>
-</div>
-</div>
 
 </body>
+
 </html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human vs Human Setup</title>
+    <link rel="stylesheet" th:href="@{/css/create-room.css}">
+</head>
+<body>
+
+<div class="top-nav">
+    <a href="/dashboard" class="back-btn">← Dashboard</a>
+</div>
+
+<div class="setup-container">
+
+    <div class="main-title">
+        <span>👥</span> Human vs Human Setup
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-group">
+        <button id="tabCreate" class="tab-btn active" onclick="switchTab('create')">Create Room</button>
+        <button id="tabJoin" class="tab-btn inactive" onclick="switchTab('join')">Join Room</button>
+    </div>
+
+    <!-- ===================== -->
+    <!-- TAB 1: CREATE ROOM    -->
+    <!-- ===================== -->
+    <div id="sectionCreate" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <div class="form-title">Create Debate Room</div>
+
+        <input type="text" id="createUsername" class="input-box" placeholder="Enter your username">
+
+        <!-- Topic Selection Grid (same as AI Debate) -->
+        <div class="section-label">Choose a Debate Topic</div>
+        <div class="topic-grid">
+            <div class="topic-card" onclick="selectCreateTopic(this)">Social media is harmful</div>
+            <div class="topic-card" onclick="selectCreateTopic(this)">Online education vs offline</div>
+            <div class="topic-card" onclick="selectCreateTopic(this)">AI will replace jobs</div>
+            <div class="topic-card" onclick="selectCreateTopic(this)">Technology improves life</div>
+            <div class="topic-card" onclick="selectCreateTopic(this)">Gaming is beneficial</div>
+            <div class="topic-card" onclick="selectCreateTopic(this)">Climate change is real</div>
+        </div>
+
+        <!-- Custom Topic Input -->
+        <div class="custom-topic-wrapper">
+            <input type="text" id="createCustomTopic" class="input-box" placeholder="Or enter your own topic...">
+        </div>
+
+        <!-- Create Button -->
+        <div class="button-row" style="margin-top: 20px;">
+            <button class="btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem;" onclick="handleCreateRoom()">🚀 Create Room</button>
+        </div>
+
+        <!-- ROOM CREATED CARD (shown after creation) -->
+        <div id="roomCreatedCard" class="room-created-card" style="display: none;">
+            <div class="room-created-title">Room Created 🎉</div>
+            <div class="room-info-row">
+                <span class="room-info-label">Room ID:</span>
+                <span id="createdRoomId" class="room-id-display"></span>
+            </div>
+            <div class="room-info-row">
+                <span class="room-info-label">Topic:</span>
+                <span id="createdTopicDisplay" class="room-topic-display"></span>
+            </div>
+            <div class="room-info-row">
+                <span class="room-info-label">Your Stance:</span>
+                <span class="room-stance-display">To be decided (Waiting for Opponent) ⏳</span>
+            </div>
+            <p class="share-hint">Share the Room ID with your opponent to start the debate!</p>
+            <div class="button-row">
+                <button class="btn-secondary" onclick="copyRoomId()">📋 Copy ID</button>
+                <button class="btn-primary" onclick="enterCreatedRoom()">🚀 Enter Room</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- TAB 2: JOIN ROOM      -->
+    <!-- ===================== -->
+    <div id="sectionJoin" style="width: 100%; display: none; flex-direction: column; align-items: center;">
+        <div class="form-title">Join Debate Room</div>
+
+        <input type="text" id="joinUsername" class="input-box" placeholder="Enter your username">
+        <input type="text" id="joinRoomId" class="input-box" placeholder="Enter room ID">
+
+        <button class="action-btn" onclick="lookupRoom()">🔍 Find Room</button>
+
+        <!-- Room Info Panel (shown after lookup) -->
+        <div id="joinRoomInfo" class="join-room-info" style="display: none;">
+            <div class="room-info-card">
+                <div class="room-info-header">Room Found ✅</div>
+
+                <div class="room-detail-row">
+                    <span class="detail-label">Topic:</span>
+                    <span id="joinTopicDisplay" class="detail-value topic-highlight"></span>
+                </div>
+
+                <div class="room-detail-row">
+                    <span class="detail-label">Created by:</span>
+                    <span id="joinCreatorDisplay" class="detail-value"></span>
+                </div>
+
+                <div class="room-detail-row">
+                    <span class="detail-label">Players:</span>
+                    <span id="joinPlayerCount" class="detail-value"></span>
+                </div>
+
+                <div class="section-label" style="margin-top: 20px;">Choose Your Stance</div>
+                <div class="stance-row">
+                    <button class="stance-btn stance-for" onclick="handleJoinRoom('for')">In Motion (For) 👍</button>
+                    <button class="stance-btn stance-against" onclick="handleJoinRoom('against')">Against the Motion 👎</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ===========================
+    // AUTOFILL USERNAME
+    // ===========================
+    let storedUser = localStorage.getItem("username") || "";
+    if (storedUser.includes("@")) {
+        storedUser = storedUser.split("@")[0];
+    }
+    if (storedUser) {
+        storedUser = storedUser.charAt(0).toUpperCase() + storedUser.slice(1);
+    }
+    document.getElementById("createUsername").value = storedUser;
+    document.getElementById("joinUsername").value = storedUser;
+
+    let currentCreatedRoomId = "";
+    let createdStance = "";
+    let selectedCreateTopic = "";
+    let foundRoomId = "";
+
+    // ===========================
+    // TAB SWITCHING
+    // ===========================
+    function switchTab(tab) {
+        const tabCreate = document.getElementById("tabCreate");
+        const tabJoin = document.getElementById("tabJoin");
+        const sectionCreate = document.getElementById("sectionCreate");
+        const sectionJoin = document.getElementById("sectionJoin");
+
+        if (tab === 'create') {
+            tabCreate.className = "tab-btn active";
+            tabJoin.className = "tab-btn inactive";
+            sectionCreate.style.display = "flex";
+            sectionJoin.style.display = "none";
+        } else {
+            tabCreate.className = "tab-btn inactive";
+            tabJoin.className = "tab-btn active";
+            sectionCreate.style.display = "none";
+            sectionJoin.style.display = "flex";
+        }
+    }
+
+    // ===========================
+    // CREATE ROOM - TOPIC SELECTION
+    // ===========================
+    function selectCreateTopic(element) {
+        document.querySelectorAll("#sectionCreate .topic-card").forEach(card => {
+            card.classList.remove("active");
+        });
+        element.classList.add("active");
+        selectedCreateTopic = element.innerText;
+
+        // Clear custom input when a card is selected
+        document.getElementById("createCustomTopic").value = "";
+    }
+
+    // Clear card selection when typing custom topic
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("createCustomTopic").addEventListener("input", function() {
+            if (this.value.trim() !== "") {
+                document.querySelectorAll("#sectionCreate .topic-card").forEach(card => {
+                    card.classList.remove("active");
+                });
+                selectedCreateTopic = "";
+            }
+        });
+    });
+
+    // ===========================
+    // CREATE ROOM
+    // ===========================
+    async function handleCreateRoom() {
+        const stance = "unknown";
+        const username = document.getElementById("createUsername").value.trim();
+        const customTopic = document.getElementById("createCustomTopic").value.trim();
+        const topic = customTopic || selectedCreateTopic;
+
+        if (!username) {
+            alert("Please enter your username!");
+            return;
+        }
+        if (!topic) {
+            alert("Please select or enter a debate topic!");
+            return;
+        }
+
+        localStorage.setItem("username", username);
+        createdStance = stance;
+
+        try {
+            const res = await fetch("/api/rooms/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, topic })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                currentCreatedRoomId = data.roomId;
+                document.getElementById("createdRoomId").innerText = data.roomId;
+                document.getElementById("createdTopicDisplay").innerText = topic;
+                document.getElementById("roomCreatedCard").style.display = "flex";
+            } else {
+                alert("Failed to create room.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error communicating with server.");
+        }
+    }
+
+    function copyRoomId() {
+        if (!currentCreatedRoomId) return;
+        navigator.clipboard.writeText(currentCreatedRoomId).then(() => {
+            alert("Room ID copied to clipboard!");
+        });
+    }
+
+    function enterCreatedRoom() {
+        if (!currentCreatedRoomId) return;
+        const username = document.getElementById("createUsername").value.trim() || "Debater";
+        window.location.href = `/human-debate?roomId=${encodeURIComponent(currentCreatedRoomId)}&username=${encodeURIComponent(username)}&stance=${encodeURIComponent(createdStance)}`;
+    }
+
+    // ===========================
+    // JOIN ROOM - LOOKUP
+    // ===========================
+    async function lookupRoom() {
+        const username = document.getElementById("joinUsername").value.trim();
+        const roomId = document.getElementById("joinRoomId").value.trim();
+
+        if (!username) {
+            alert("Please enter your username!");
+            return;
+        }
+        if (!roomId) {
+            alert("Please enter the Room ID!");
+            return;
+        }
+
+        localStorage.setItem("username", username);
+
+        try {
+            const res = await fetch(`/api/rooms/${encodeURIComponent(roomId)}`);
+            if (res.status === 404) {
+                alert("Room not found! Please check the Room ID.");
+                document.getElementById("joinRoomInfo").style.display = "none";
+                return;
+            }
+            const data = await res.json();
+
+            if (data.exists) {
+                foundRoomId = roomId;
+                document.getElementById("joinTopicDisplay").innerText = data.topic || "General Debate";
+                document.getElementById("joinCreatorDisplay").innerText = data.creator || "Unknown";
+                document.getElementById("joinPlayerCount").innerText = `${data.playerCount || 1}/2`;
+                document.getElementById("joinRoomInfo").style.display = "block";
+            } else {
+                alert("Room does not exist.");
+                document.getElementById("joinRoomInfo").style.display = "none";
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to look up room.");
+        }
+    }
+
+    // ===========================
+    // JOIN ROOM - WITH STANCE
+    // ===========================
+    function handleJoinRoom(stance) {
+        const username = document.getElementById("joinUsername").value.trim() || "Debater";
+        if (!foundRoomId) {
+            alert("No room selected!");
+            return;
+        }
+        window.location.href = `/human-debate?roomId=${encodeURIComponent(foundRoomId)}&username=${encodeURIComponent(username)}&stance=${encodeURIComponent(stance)}`;
+    }
+</script>
+
+</body>
+</html>

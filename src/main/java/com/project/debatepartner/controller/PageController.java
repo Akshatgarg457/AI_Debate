@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class PageController {
 
-    // Open login page when user visits "/"
     @GetMapping("/")
     public String showLoginPage() {
         return "login";
@@ -21,24 +20,44 @@ public class PageController {
     public String signupPage() {
         return "signup";
     }
+
     @GetMapping("/forget")
     public String forgetPage() {
         return "forget";
     }
+
     @GetMapping("/dashboard")
     public String dashboard() {
         return "dashboard";
     }
-    @GetMapping("/debate")
-    public String debate() {
-        return "debate";
-    }
+
     @GetMapping("/topic")
     public String topicPage() {
         return "topic";
     }
-    @GetMapping("/result")
-    public String resultPage() {
-        return "result";
+
+    @GetMapping("/debate")
+    public String debatePage() {
+        return "debate";
     }
-}  
+
+    @GetMapping("/ai-history")
+    public String aiHistoryPage() {
+        return "ai-history";
+    }
+
+    @GetMapping("/create-room")
+    public String createRoomPage() {
+        return "create-room";
+    }
+
+    @GetMapping("/human-debate")
+    public String humanDebatePage() {
+        return "human-debate";
+    }
+
+    @GetMapping("/human-history")
+    public String humanHistoryPage() {
+        return "human-history";
+    }
+}

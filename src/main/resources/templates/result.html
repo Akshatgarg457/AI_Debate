@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Debate Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/result.css}">
 </head>
 
@@ -12,25 +13,34 @@
     <a href="/dashboard" class="back-btn">← Dashboard</a>
 </div>
 
-<div class="container">
+<div class="container fade-in">
+    <div class="topic-header">
+        <h2 id="topic"></h2>
+    </div>
 
-    <h2 id="topic"></h2>
-
-    <div class="result-card">
+    <div class="result-card pulse-glow">
+        <div class="trophy-icon">🏆</div>
         <h1 id="winner"></h1>
         <p id="reason"></p>
     </div>
 
-    <div class="argument-box">
-        <h3>🧑 Your Argument</h3>
-        <p id="userArg"></p>
-    </div>
+    <div class="arguments-container">
+        <div class="argument-box user-arg-box">
+            <div class="arg-header">
+                <span class="icon">🧑</span>
+                <h3>Your Argument</h3>
+            </div>
+            <p id="userArg"></p>
+        </div>
 
-    <div class="argument-box">
-        <h3>🤖 AI Argument</h3>
-        <p id="aiArg"></p>
+        <div class="argument-box ai-arg-box">
+            <div class="arg-header">
+                <span class="icon">🤖</span>
+                <h3>AI Argument</h3>
+            </div>
+            <p id="aiArg"></p>
+        </div>
     </div>
-
 </div>
 
 <script>

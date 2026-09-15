@@ -1,260 +1,247 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Debate AI</title>
-    <link rel="stylesheet" th:href="@{/css/Debate.css}">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Debate</title>
+    <link rel="stylesheet" th:href="@{/css/Debate.css}">
 </head>
-
 <body>
 
-<div class="header">
-    <h2 id="modeTitle">Debate Mode</h2>
-    <a href="/dashboard" class="back-btn">← Back</a>
+<!-- ── HEADER ── -->
+<div class="debate-header">
+    <div class="header-left">
+        <a href="/dashboard" class="back-btn">← Back</a>
+        <div class="header-title">
+            <span id="modeIcon">🤖</span>
+            <span id="modeTitle">AI Debate</span>
+        </div>
+    </div>
+    <div class="header-right">
+        <div>Topic: <span id="headerTopic" class="topic-code">Loading…</span></div>
+        <div>Stance: <span id="headerStance" class="stance-badge">—</span></div>
+        <div>Status: <span id="headerStatus" class="status-active">Active</span></div>
+    </div>
 </div>
 
-<div class="container">
 
-    <h1>Start Your Debate</h1>
+<!-- ── MAIN ── -->
+<div class="main-content">
 
-    <h2 id="topicTitle">Topic: Loading...</h2>
+    <!-- Topic Banner -->
+    <div id="topicTitle" class="topic-banner">Topic: Loading…</div>
 
-    <div id="chatBox" class="chat-box"></div>
+    <!-- Chat Box -->
+    <div id="chatBox" class="chat-container">
+        <div class="system-msg">🤖 AI Debate session started. Present your argument below!</div>
+    </div>
 
-    <div class="input-section">
-        <button onclick="startVoiceRecognition()" id="micBtn" class="icon-btn" title="Speak Argument">🎤</button>
-        <textarea id="argument" placeholder="Type or speak your argument and press Enter..."></textarea>
-        <button onclick="sendArgument()">Send</button>
-        <button onclick="endDebate()" class="end-btn">End Debate</button>
-        <button onclick="toggleVoice()" id="voiceToggleBtn" class="icon-btn voice-toggle" title="AI Voice On">🔊</button>
+    <!-- Input Bar -->
+    <div class="control-bar">
+        <input
+            type="text"
+            id="argumentInput"
+            class="message-input"
+            placeholder="Type your argument and press Enter…"
+            autocomplete="off">
+        <button id="micBtn" class="speak-btn" onclick="startVoiceRecognition()">🎤 Speak</button>
+        <button id="sendBtn" class="send-btn" onclick="sendArgument()">Send</button>
+        <button id="voiceToggleBtn" class="tts-btn" onclick="toggleVoice()" title="AI Voice On">🔊</button>
+    </div>
+
+    <!-- End Debate -->
+    <div class="end-btn-wrapper">
+        <button id="endBtn" class="end-btn" onclick="endDebate()">🚨 End Debate</button>
     </div>
 
 </div>
 
-<!-- 🏆 RESULT AT BOTTOM -->
-<div id="resultBox" class="result-bottom"></div>
+
+<!-- ── RESULT MODAL ── -->
+<div id="resultModal" class="result-modal" style="display:none;">
+    <div class="result-card">
+        <h2 id="resultWinner">🏆 Debate Completed</h2>
+        <p id="resultReason">—</p>
+        <button class="send-btn" onclick="window.location.href='/dashboard'">Return to Dashboard</button>
+    </div>
+</div>
+
 
 <script>
+    const params = new URLSearchParams(window.location.search);
+    let topic   = params.get("topic") || "General Debate";
+    let mode    = params.get("mode")  || "ai";
+    let stance  = params.get("stance") || "for";
 
-const params = new URLSearchParams(window.location.search);
-let topic = params.get("topic");
-let mode = params.get("mode");
-let stance = params.get("stance") || "for";
+    let lastUserArg  = "";
+    let lastAiArg    = "";
+    let debateEnded  = false;
+    let voiceEnabled = true;
 
-let lastUserArg = "";
-let lastAiArg = "";
-let debateEnded = false;
+    // ── Initialise UI ──
+    const stanceLabel = stance === "for" ? "In Motion (For) 👍" : "Against the Motion 👎";
+    const stanceColour = stance === "for" ? "#86efac" : "#f87171";
 
-// SET TOPIC
-if(topic){
-    let stanceText = stance === "for" ? "(In Motion)" : "(Against Motion)";
-    document.getElementById("topicTitle").innerText = `Topic: ${topic} ${stanceText}`;
-}else{
-    topic = "General Debate";
-    document.getElementById("topicTitle").innerText = "Topic: General Debate";
-}
+    document.getElementById("topicTitle").innerText  = `Topic: ${topic}`;
+    document.getElementById("headerTopic").innerText = topic;
+    document.getElementById("headerStance").innerText = stanceLabel;
+    document.getElementById("headerStance").style.color = stanceColour;
 
-// SET MODE
-if(mode === "human"){
-    document.getElementById("modeTitle").innerText = "Human Debate 👥";
-}else{
-    document.getElementById("modeTitle").innerText = "AI Debate 🤖";
-}
-
-// Handle Enter to submit
-document.getElementById("argument").addEventListener("keypress", function(event) {
-    if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        sendArgument();
-    }
-});
-
-// SEND
-function sendArgument() {
-
-    if(debateEnded){
-        alert("Debate already ended!");
-        return;
+    if (mode === "human") {
+        document.getElementById("modeIcon").innerText  = "👥";
+        document.getElementById("modeTitle").innerText = "Human Debate";
     }
 
-    let argumentInput = document.getElementById("argument");
-    let userText = argumentInput.value;
-    let chatBox = document.getElementById("chatBox");
-
-    if(userText.trim() === ""){
-        return;
-    }
-
-    lastUserArg = userText;
-    chatBox.innerHTML += `<div class="msg user">You: ${userText}</div>`;
-    argumentInput.value = "";
-    
-    // Auto resize
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    if(mode === "human"){
-        chatBox.innerHTML += `<div class="msg opponent">Opponent: ${userText}</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-        return;
-    }
-
-    // Loading indicator
-    let loadingId = "loading-" + Date.now();
-    chatBox.innerHTML += `<div id="${loadingId}" class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    fetch("/debate", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({argument: userText, topic: topic, stance: stance})
-    })
-    .then(res => res.text())
-    .then(data => {
-        // Remove loading
-        document.getElementById(loadingId).remove();
-        
-        lastAiArg = data;
-        chatBox.innerHTML += `<div class="msg ai">AI: ${data}</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-        
-        // Speak response
-        speakText(data);
-    })
-    .catch(err => {
-        document.getElementById(loadingId).remove();
-        chatBox.innerHTML += `<div class="msg ai">AI: Error communicating with server.</div>`;
+    // ── Enter key ──
+    document.getElementById("argumentInput").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") { e.preventDefault(); sendArgument(); }
     });
-}
 
-// END DEBATE
-function endDebate() {
+    // ── Send Argument ──
+    function sendArgument() {
+        if (debateEnded) { alert("Debate already ended!"); return; }
+        const input    = document.getElementById("argumentInput");
+        const userText = input.value.trim();
+        if (!userText) return;
 
-    if(debateEnded){
-        alert("Debate already ended!");
-        return;
+        lastUserArg = userText;
+        appendBubble("You: " + userText, "bubble-user");
+        input.value = "";
+
+        if (mode === "human") {
+            appendBubble("Opponent: " + userText, "bubble-opponent");
+            return;
+        }
+
+        // AI typing indicator
+        const loadingId = "loading-" + Date.now();
+        const chatBox = document.getElementById("chatBox");
+        const loader  = document.createElement("div");
+        loader.id = loadingId;
+        loader.className = "loading-indicator";
+        loader.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
+        chatBox.appendChild(loader);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        fetch("/debate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({argument: userText, topic: topic, stance: stance})
+        })
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById(loadingId)?.remove();
+            lastAiArg = data;
+            appendBubble("🤖 AI: " + data, "bubble-opponent");
+            speakText(data);
+        })
+        .catch(() => {
+            document.getElementById(loadingId)?.remove();
+            appendBubble("🤖 AI: Error communicating with server.", "bubble-opponent");
+        });
     }
 
-    if(!lastUserArg || !lastAiArg){
-        alert("Complete at least one round!");
-        return;
+    function appendBubble(text, className) {
+        const chatBox = document.getElementById("chatBox");
+        const bubble  = document.createElement("div");
+        bubble.className = "chat-bubble " + className;
+        bubble.innerText = text;
+        chatBox.appendChild(bubble);
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    debateEnded = true;
+    // ── End Debate ──
+    function endDebate() {
+        if (debateEnded) { alert("Debate already ended!"); return; }
+        if (!lastUserArg || !lastAiArg) { alert("Complete at least one round first!"); return; }
+        debateEnded = true;
 
-    let winner = "";
-    let reason = "";
+        let winner, reason;
+        if (lastUserArg.length > lastAiArg.length) {
+            winner = "You 🥇";
+            reason = "Your argument was longer and more detailed.";
+        } else {
+            winner = "AI 🤖";
+            reason = "AI argument was longer and more detailed.";
+        }
 
-    if(lastUserArg.length > lastAiArg.length){
-        winner = "You 🥇";
-        reason = "Your argument was longer and more detailed.";
-    } else {
-        winner = "AI 🤖";
-        reason = "AI argument was longer and more detailed.";
+        // Update header status
+        const statusEl = document.getElementById("headerStatus");
+        statusEl.innerText = "Completed";
+        statusEl.className = "status-completed";
+
+        // Disable inputs
+        document.getElementById("argumentInput").disabled = true;
+        document.getElementById("sendBtn").disabled = true;
+        document.getElementById("micBtn").disabled  = true;
+        document.getElementById("endBtn").disabled  = true;
+
+        document.getElementById("resultWinner").innerText = `🏆 Winner: ${winner}`;
+        document.getElementById("resultReason").innerText = reason;
+        document.getElementById("resultModal").style.display = "flex";
+
+        localStorage.setItem("lastWinner", winner);
+        localStorage.setItem("lastReason", reason);
+        localStorage.setItem("lastTopic",  topic);
+
+        saveDebate();
     }
 
-    const resultBox = document.getElementById("resultBox");
-
-    resultBox.innerHTML = `
-        <div class="result-card">
-            <h2>🏆 Winner: ${winner}</h2>
-            <p><b>Reason:</b> ${reason}</p>
-        </div>
-    `;
-
-    resultBox.classList.add("show");
-    resultBox.scrollIntoView({ behavior: "smooth" });
-
-    // 🔥 SAVE RESULT LOCALLY (FOR DASHBOARD)
-    localStorage.setItem("lastWinner", winner);
-    localStorage.setItem("lastReason", reason);
-    localStorage.setItem("lastTopic", topic);
-
-    saveDebate();
-}
-
-// SAVE
-function saveDebate() {
-    const username = localStorage.getItem("username") || "Guest";
-
-    fetch("/saveDebate", {
-        method: "POST",
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        body: `username=${username}&topic=${topic}&userArgument=${lastUserArg}&aiArgument=${lastAiArg}`
-    });
-}
-
-// --- VOICE INTEGRATION ---
-let voiceEnabled = true;
-
-function toggleVoice() {
-    voiceEnabled = !voiceEnabled;
-    const btn = document.getElementById("voiceToggleBtn");
-    if(voiceEnabled) {
-        btn.innerText = "🔊";
-        btn.title = "AI Voice On";
-        btn.classList.remove("off");
-    } else {
-        btn.innerText = "🔈";
-        btn.title = "AI Voice Off";
-        btn.classList.add("off");
-        window.speechSynthesis.cancel();
+    function saveDebate() {
+        const user = localStorage.getItem("username") || "Guest";
+        fetch("/saveDebate", {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: `username=${encodeURIComponent(user)}&topic=${encodeURIComponent(topic)}&userArgument=${encodeURIComponent(lastUserArg)}&aiArgument=${encodeURIComponent(lastAiArg)}`
+        });
     }
-}
 
-function speakText(text) {
-    if(!voiceEnabled) return;
-    
-    // Clean text: remove asterisks or markdown
-    let cleanText = text.replace(/[\*\_]/g, "");
-    
-    let utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'en-US';
-    utterance.rate = 1.0;
-    
-    window.speechSynthesis.speak(utterance);
-}
-
-// Voice Recognition (Speech-to-Text)
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition;
-if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = function() {
-        document.getElementById("micBtn").classList.add("recording");
-        document.getElementById("micBtn").innerText = "🔴";
-    };
-
-    recognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript;
-        const argInput = document.getElementById("argument");
-        argInput.value += (argInput.value ? " " : "") + transcript;
-    };
-
-    recognition.onerror = function(event) {
-        console.error("Speech recognition error", event.error);
-        document.getElementById("micBtn").classList.remove("recording");
-        document.getElementById("micBtn").innerText = "🎤";
-    };
-
-    recognition.onend = function() {
-        document.getElementById("micBtn").classList.remove("recording");
-        document.getElementById("micBtn").innerText = "🎤";
-    };
-} else {
-    console.warn("Speech Recognition API not supported in this browser.");
-}
-
-function startVoiceRecognition() {
-    if (recognition) {
-        recognition.start();
-    } else {
-        alert("Your browser does not support Speech Recognition. Please use Chrome or Edge.");
+    // ── Voice TTS ──
+    function toggleVoice() {
+        voiceEnabled = !voiceEnabled;
+        const btn = document.getElementById("voiceToggleBtn");
+        btn.innerText = voiceEnabled ? "🔊" : "🔈";
+        btn.title     = voiceEnabled ? "AI Voice On" : "AI Voice Off";
+        btn.classList.toggle("off", !voiceEnabled);
+        if (!voiceEnabled) window.speechSynthesis.cancel();
     }
-}
+    function speakText(text) {
+        if (!voiceEnabled) return;
+        const utt = new SpeechSynthesisUtterance(text.replace(/[*_]/g, ""));
+        utt.lang = "en-US";
+        utt.rate = 1.0;
+        window.speechSynthesis.speak(utt);
+    }
 
+    // ── Speech Recognition ──
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = "en-US";
+        recognition.onstart = () => {
+            document.getElementById("micBtn").classList.add("recording");
+            document.getElementById("micBtn").innerText = "🔴 Recording";
+        };
+        recognition.onresult = e => {
+            const t = e.results[0][0].transcript;
+            const inp = document.getElementById("argumentInput");
+            inp.value += (inp.value ? " " : "") + t;
+        };
+        recognition.onerror = () => {
+            document.getElementById("micBtn").classList.remove("recording");
+            document.getElementById("micBtn").innerText = "🎤 Speak";
+        };
+        recognition.onend = () => {
+            document.getElementById("micBtn").classList.remove("recording");
+            document.getElementById("micBtn").innerText = "🎤 Speak";
+        };
+    }
+    function startVoiceRecognition() {
+        if (recognition) recognition.start();
+        else alert("Speech Recognition not supported. Use Chrome or Edge.");
+    }
 </script>
 
 </body>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Debate History</title>
+
+    <link rel="stylesheet" href="/css/history.css">
+    <link rel="stylesheet" href="/css/ai-history.css">
+</head>
+
+<body>
+
+<div class="history-header">
+
+    <a href="/dashboard" class="back-btn">
+        ← Dashboard
+    </a>
+
+    <div class="history-user">
+        <span id="usernameDisplay"></span>
+
+        <a href="/" class="logout-btn">
+            Logout
+        </a>
+    </div>
+
+</div>
+
+
+<div class="history-container">
+
+    <h1 class="history-title">
+        🤖 AI Debate History
+    </h1>
+
+    <p class="history-subtitle">
+        Your debates with the AI opponent
+    </p>
+
+
+    <div id="loading" class="history-message">
+        Loading your debates...
+    </div>
+
+
+    <div id="error" class="history-message error hidden">
+        Unable to load your debate history.
+    </div>
+
+
+    <div id="history-grid" class="history-grid"></div>
+
+</div>
+
+
+<div id="detailsModal" class="history-modal hidden">
+
+    <div class="history-modal-content">
+
+        <div class="modal-header">
+
+            <h2>
+                🤖 AI Debate
+            </h2>
+
+            <button class="close-btn" onclick="closeModal()">
+                ×
+            </button>
+
+        </div>
+
+        <div id="debateDetails"></div>
+
+    </div>
+
+</div>
+
+
+<script src="/js/ai-history.js"></script>
+
+</body>
+
+</html>

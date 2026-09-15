@@ -1,12 +1,11 @@
 package com.project.debatepartner.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import com.project.debatepartner.model.User;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends MongoRepository<User, String> {
 
     User findByUsername(String username);
 
     User findByEmail(String email);
-
 }

@@ -1,4 +1,5 @@
 /* BACKGROUND */
+
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
@@ -6,29 +7,48 @@ body {
     color: white;
 }
 
+
 /* HEADER */
+
 .header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 20px 40px;
     backdrop-filter: blur(10px);
-    background: rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.header h2 {
+    margin: 0;
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+
 /* TITLE */
+
 .title {
     font-size: 2.2rem;
     margin-bottom: 20px;
 }
 
+
 /* CONTAINER */
+
 .container {
     text-align: center;
     padding: 40px;
 }
 
+
 /* CARD LAYOUT */
+
 .card-container {
     display: flex;
     justify-content: center;
@@ -36,7 +56,9 @@ body {
     margin: 25px 0;
 }
 
+
 /* BASE CARD */
+
 .card {
     width: 260px;
     padding: 25px;
@@ -45,39 +67,47 @@ body {
     transition: all 0.3s ease;
 }
 
+
 /* GLOW CARD */
+
 .glow {
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    box-shadow: 0 0 20px rgba(139,92,246,0.5);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
 }
 
 .glow:hover {
     transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 0 40px rgba(139,92,246,0.8);
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
 }
 
+
 /* GLASS CARD */
+
 .glass {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .glass:hover {
     transform: translateY(-6px);
 }
 
+
 /* PANEL */
+
 .panel {
     margin: 30px auto;
     width: 60%;
     padding: 20px;
     border-radius: 15px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
 }
 
+
 /* HISTORY */
+
 .history-box {
     width: 60%;
     margin: 10px auto;
@@ -86,13 +116,60 @@ body {
     background: #334155;
 }
 
+
 /* SECTION TITLE */
+
 .section-title {
     margin-top: 20px;
 }
 
+
 /* LOGOUT */
+
 .logout-btn {
     color: #f87171;
     text-decoration: none;
+}
+
+.logout-btn:hover {
+    color: #fca5a5;
+}
+
+
+/* USER */
+
+#usernameDisplay {
+    color: white;
+    font-size: 15px;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    .header {
+        padding: 18px 20px;
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .card-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .card {
+        width: 80%;
+        max-width: 260px;
+    }
+
+    .container {
+        padding: 30px 15px;
+    }
+
+    .title {
+        font-size: 1.8rem;
+    }
 }
