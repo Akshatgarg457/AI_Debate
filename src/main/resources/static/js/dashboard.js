@@ -3,11 +3,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const username = localStorage.getItem("username");
 
     if (!username) {
-        window.location.href = "/login";
+        window.location.replace("/login");
         return;
     }
 
-    document.getElementById("username").textContent = username;
+    const usernameDisplay = document.getElementById("usernameDisplay");
+
+    if (usernameDisplay) {
+        usernameDisplay.textContent = "👋 " + username;
+    }
+
+    window.history.replaceState(null, "", window.location.href);
 });
 
 
@@ -35,5 +41,5 @@ function logout() {
 
     localStorage.removeItem("username");
 
-    window.location.href = "/login";
+    window.location.replace("/logout");
 }

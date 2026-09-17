@@ -20,10 +20,6 @@ public class DebateController {
     @Autowired
     private GeminiService geminiService;
 
-    // =========================================================
-    // AI DEBATE - GET AI RESPONSE
-    // =========================================================
-
     @PostMapping("/debate")
     public String handleDebate(
             @RequestBody Map<String, String> request) {
@@ -50,10 +46,6 @@ public class DebateController {
         );
     }
 
-    // =========================================================
-    // START NEW AI DEBATE
-    // =========================================================
-
     @PostMapping("/ai-debate/start")
     public AIDebate startAIDebate(
             @RequestParam String username,
@@ -69,10 +61,6 @@ public class DebateController {
 
         return aiDebateRepository.save(debate);
     }
-
-    // =========================================================
-    // SAVE USER ARGUMENT
-    // =========================================================
 
     @PostMapping("/ai-debate/{debateId}/user-message")
     public AIDebate saveUserArgument(
@@ -106,10 +94,6 @@ public class DebateController {
         return aiDebateRepository.save(debate);
     }
 
-    // =========================================================
-    // SAVE AI ARGUMENT
-    // =========================================================
-
     @PostMapping("/ai-debate/{debateId}/ai-message")
     public AIDebate saveAIArgument(
             @PathVariable String debateId,
@@ -142,10 +126,6 @@ public class DebateController {
         return aiDebateRepository.save(debate);
     }
 
-    // =========================================================
-    // END AI DEBATE
-    // =========================================================
-
     @PostMapping("/ai-debate/{debateId}/end")
     public AIDebate endAIDebate(
             @PathVariable String debateId,
@@ -177,12 +157,6 @@ public class DebateController {
         return aiDebateRepository.save(debate);
     }
 
-    // =========================================================
-    // OLD SAVE DEBATE ENDPOINT
-    // =========================================================
-    // Kept temporarily so your existing frontend does not
-    // immediately break while we migrate it.
-
     @PostMapping("/saveDebate")
     public String saveDebate(
             @RequestParam String username,
@@ -196,27 +170,15 @@ public class DebateController {
         debate.setTopic(topic);
         debate.setUserStance("FOR");
 
-        // -----------------------------------------------------
-        // Save user argument
-        // -----------------------------------------------------
-
         debate.addMessage(
                 "USER",
                 userArgument
         );
 
-        // -----------------------------------------------------
-        // Save AI argument
-        // -----------------------------------------------------
-
         debate.addMessage(
                 "AI",
                 aiArgument
         );
-
-        // -----------------------------------------------------
-        // Simple winner logic
-        // -----------------------------------------------------
 
         if (userArgument.length() > aiArgument.length()) {
 
@@ -251,10 +213,6 @@ public class DebateController {
         return "Saved";
     }
 
-    // =========================================================
-    // AI DEBATE HISTORY
-    // =========================================================
-
     @GetMapping("/history")
     public List<AIDebate> getHistory(
             @RequestParam String username) {
@@ -264,10 +222,6 @@ public class DebateController {
                         username
                 );
     }
-
-    // =========================================================
-    // GET ONE AI DEBATE
-    // =========================================================
 
     @GetMapping("/ai-debate/{debateId}")
     public AIDebate getAIDebate(
@@ -285,10 +239,6 @@ public class DebateController {
                         )
                 );
     }
-
-    // =========================================================
-    // AI DEBATE STATS
-    // =========================================================
 
     @GetMapping("/stats")
     public Map<String, Integer> getStats(

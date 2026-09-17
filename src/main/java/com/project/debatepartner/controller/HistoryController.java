@@ -20,10 +20,6 @@ public class HistoryController {
     @Autowired
     private HumanDebateRepository humanDebateRepository;
 
-    // =========================================================
-    // AI DEBATE HISTORY
-    // =========================================================
-
     @GetMapping("/ai")
     public List<AIDebate> getAIDebateHistory(
             @RequestParam String username) {
@@ -31,10 +27,6 @@ public class HistoryController {
         return aiDebateRepository
                 .findByUsernameOrderByCreatedAtDesc(username);
     }
-
-    // =========================================================
-    // HUMAN DEBATE HISTORY
-    // =========================================================
 
     @GetMapping("/human")
     public List<HumanDebate> getHumanDebateHistory(
@@ -46,10 +38,6 @@ public class HistoryController {
                         username
                 );
     }
-
-    // =========================================================
-    // AI DEBATE DETAILS
-    // =========================================================
 
     @GetMapping("/ai/{debateId}")
     public AIDebate getAIDebateDetails(
@@ -68,10 +56,6 @@ public class HistoryController {
                 );
     }
 
-    // =========================================================
-    // HUMAN DEBATE DETAILS
-    // =========================================================
-
     @GetMapping("/human/{debateId}")
     public HumanDebate getHumanDebateDetails(
             @PathVariable String debateId,
@@ -85,11 +69,6 @@ public class HistoryController {
                                         "Human debate not found."
                                 )
                         );
-
-        // -----------------------------------------------------
-        // Security check
-        // Only a participant can view the debate
-        // -----------------------------------------------------
 
         boolean isParticipant =
                 username.equals(debate.getPlayer1())

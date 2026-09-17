@@ -7,6 +7,10 @@
 
     <title>Dashboard</title>
 
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
 </head>
 
@@ -19,13 +23,12 @@
     <div class="user-section">
         <span id="usernameDisplay">👋 User</span>
 
-        <a href="/" class="logout-btn">
+        <a href="/logout" class="logout-btn" onclick="logout()">
             Logout
         </a>
     </div>
 
 </div>
-
 
 <div class="container">
 
@@ -33,11 +36,10 @@
         Choose Your Mode
     </h1>
 
-
     <div class="card-container">
 
         <div class="card glow"
-             onclick="location.href='/topic?mode=ai'">
+             onclick="startAIDebate()">
 
             <h2>🤖 AI Debate</h2>
 
@@ -45,9 +47,8 @@
 
         </div>
 
-
         <div class="card glow"
-             onclick="location.href='/create-room'">
+             onclick="startHumanDebate()">
 
             <h2>👥 Human Debate</h2>
 
@@ -57,11 +58,10 @@
 
     </div>
 
-
     <div class="card-container">
 
         <div class="card glass"
-             onclick="location.href='/ai-history'">
+             onclick="openAIHistory()">
 
             <h3>🤖📜 AI History</h3>
 
@@ -69,9 +69,8 @@
 
         </div>
 
-
         <div class="card glass"
-             onclick="location.href='/human-history'">
+             onclick="openHumanHistory()">
 
             <h3>👥📜 Human History</h3>
 
@@ -82,7 +81,6 @@
     </div>
 
 </div>
-
 
 <script src="/js/dashboard.js"></script>
 
